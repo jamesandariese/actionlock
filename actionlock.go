@@ -9,7 +9,7 @@ type ActionLockCallback func(*ActionLock)
 
 type ActionLock struct {
 	Callback ActionLockCallback
-	value    int
+	value    interface{}
 	lock     *sync.RWMutex
 }
 
@@ -21,11 +21,11 @@ func New(cb ActionLockCallback) *ActionLock {
 	}
 }
 
-func (al *ActionLock) Get() int {
+func (al *ActionLock) Get() interface{} {
 	return al.value
 }
 
-func (al *ActionLock) LockValue(value int) {
+func (al *ActionLock) LockValue(value interface{}) {
 	// first, we'll take a read lock to determine the current value
 	// this way we'll have a chance to short circuit the locking
 	// for readers that are using the same value.
