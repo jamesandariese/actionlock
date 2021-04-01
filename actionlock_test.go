@@ -12,7 +12,7 @@ func Example() {
 	})
 
 	wg := &sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(4)
 	go func() {
 		defer wg.Done()
 		time.Sleep(100 * time.Millisecond)
