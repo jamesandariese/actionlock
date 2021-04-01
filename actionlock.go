@@ -51,7 +51,7 @@ func (al *ActionLock) LockValue(value interface{}) {
 	al.lock.RLock() // now reassert the read lock
 }
 
-func (al *ActionLock) UnlockValue(value int) {
+func (al *ActionLock) UnlockValue(value interface{}) {
 	// it is an error for al.lock to not be held for reading upon entry
 	defer al.lock.RUnlock()
 
