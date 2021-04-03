@@ -38,17 +38,32 @@ func (al *ActionLock) LockValue(value interface{}) {
 	}
 	al.lock.RUnlock() // unassert it instead so we can take the write lock
 
-	func() {
-		// protect the lock call 'cause we don't control the callback
-		al.lock.Lock()
-		defer al.lock.Unlock()
-		if al.value != value {
-			al.value = value
-			al.Callback(al)
-		}
-	}()
+	for {
+		func() {
+			// protect the lock call 'cause we don't control the callback
+			al.lock.Lock()
+			defer al.lock.Unlock()
+			if al.value != value {
+				al.value = value
+				al.Callback(al)
+			}
+		}()
 
-	al.lock.RLock() // now reassert the read lock
+		al.lock.RLock() // now reassert the read lock
+
+		if al.value == value {
+			// yay we did it!  leave the read lock in place and return
+			return
+		}
+
+		// otherwise, we need to go around again with writing the value.
+		// another process overwrote it between the write lock and read lock.
+		//
+		// let's drop the read lock so we can get the write lock at the top
+		// of the loop.
+
+		al.lock.RUnlock()
+	}
 }
 
 func (al *ActionLock) UnlockValue(value interface{}) {
@@ -56,6 +71,6 @@ func (al *ActionLock) UnlockValue(value interface{}) {
 	defer al.lock.RUnlock()
 
 	if al.value != value {
-		log.Fatalf("ActionLock value was not %d (was actually %d)", al.value, value)
+		log.Fatalf("ActionLock value was not %d when unlocking (was actually %d)", value, al.value)
 	}
 }

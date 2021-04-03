@@ -2,7 +2,9 @@ package actionlock
 
 import (
 	"fmt"
+	"runtime"
 	"sync"
+	"testing"
 	"time"
 )
 
@@ -58,4 +60,22 @@ func Example() {
 	// D
 	// Setting to 2
 	// Setting to 1
+}
+
+func TestRace(t *testing.T) {
+	al := New(func(al *ActionLock) {
+		// fmt.Println("sup", al.Get())
+	})
+	wg := sync.WaitGroup{}
+	rounds := 100000
+	wg.Add(rounds)
+	for i := 0; i < rounds; i++ {
+		go func(v, ms int) {
+			defer wg.Done()
+			al.LockValue(v)
+			defer al.UnlockValue(v)
+			runtime.Gosched()
+		}(i, 1)
+	}
+	wg.Wait()
 }
